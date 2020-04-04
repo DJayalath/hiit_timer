@@ -16,3 +16,6 @@ A timer for high intensity interval training (HIIT)
 - Set countdown
 - Break countdown
 - Huge timer for best visibility during workout
+
+## Acknowledgements
+Modified [analog_clock](https://github.com/furkantektas/analog_clock) library from [furkantektas](https://github.com/furkantektas)

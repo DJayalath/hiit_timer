@@ -46,7 +46,7 @@ class HIITTimer extends StatelessWidget {
           body: TabBarView(
             children: [
               Settings(),
-              Icon(Icons.timer),
+              Timer(),
             ],
           )
         )
