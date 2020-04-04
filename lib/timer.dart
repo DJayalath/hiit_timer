@@ -167,6 +167,7 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
                                                                                                           if (setsRemaining - 1 == sets) {
                                                                                                               controller.reset();
                                                                                                               controller.stop();
+                                                                                                              Wakelock.disable();
                                                                                                           } else {
                                                                                                               controller.reset();
                                                                                                               controller.forward(from: 0.0);
