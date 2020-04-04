@@ -18,11 +18,22 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
 
     String get timerString {
         Duration duration = Duration(seconds: ((inBreak) ? breakInterval : repTime).inSeconds - (controller.duration.inSeconds * controller.value).floor());
-        if (duration.inSeconds <= 60) {
-            return '${(duration.inSeconds % 60).toString()}';
+        if (duration.inSeconds < 60) {
+            return '${(duration.inSeconds).toString()}';
         } else {
-            return '${duration.inMinutes}:${duration.inSeconds % 60}';
+            return '${_printDuration(duration)}';
         }
+    }
+
+    String _printDuration(Duration duration) {
+        String twoDigits(int n) {
+            if (n >= 10) return "$n";
+            return "0$n";
+        }
+
+        String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+        String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+        return "$twoDigitMinutes:$twoDigitSeconds";
     }
 
     @override
@@ -165,6 +176,8 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
                                                                                                               controller.duration = repTime;
                                                                                                           }
                                                                                                           if (setsRemaining - 1 == sets) {
+                                                                                                              setsRemaining = 1;
+                                                                                                              cyclesRemaining = 1;
                                                                                                               controller.reset();
                                                                                                               controller.stop();
                                                                                                               Wakelock.disable();
