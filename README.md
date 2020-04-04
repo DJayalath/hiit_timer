@@ -1,16 +1,18 @@
 # hiit_timer
 
-HIIT Timer
+A timer for high intensity interval training (HIIT)
 
-## Getting Started
+## Features TODO
 
-This project is a starting point for a Flutter application.
+### Settings
+- ~~Set rep time~~
+- Set cycles in set
+- Set number of sets
+- Set break interval between sets
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Timer
+- Rep countdown
+- Cycle countdown
+- Set countdown
+- Break countdown
+- Huge timer for best visibility during workout
