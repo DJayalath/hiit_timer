@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
-import 'analog_clock.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:math';
 
 class Timer extends StatefulWidget {
     @override
@@ -9,33 +9,152 @@ class Timer extends StatefulWidget {
 
 }
 
-class TimerState extends State<Timer> {
+class TimerState extends State<Timer> with TickerProviderStateMixin {
     Timer timer = Timer();
+
+    AnimationController controller;
+
+    String get timerString {
+        Duration duration = controller.duration * controller.value;
+        return '${duration.inMinutes}:${(duration.inSeconds % 60).toString().padLeft(2, '0')}';
+    }
+
+    @override
+    void initState() {
+        super.initState();
+        controller = AnimationController(
+            vsync: this,
+            duration: Duration(seconds: 20),
+        );
+        setTimerState();
+    }
+
+    void setTimerState() async {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+
+        if (prefs.containsKey('repTime')) {
+            setState(() {
+                controller = AnimationController(
+                    vsync: this,
+                    duration: Duration(seconds: prefs.getInt('repTime')),
+                );
+            });
+        }
+    }
 
     @override
     Widget build(BuildContext context) {
+        ThemeData themeData = Theme.of(context);
         return Scaffold(
+//            backgroundColor: Colors.white10,
             body: Container(
-                alignment: Alignment.topCenter,
-                child: AnalogClock(
-                    decoration: BoxDecoration(
-                        border: Border.all(width: 2.0, color: Colors.white),
-                        color: Colors.transparent,
-                        shape: BoxShape.circle),
-                    width: 350.0,
-                    isLive: false,
-                    hourHandColor: Colors.greenAccent,
-                    minuteHandColor: Colors.greenAccent,
-                    showSecondHand: false,
-                    numberColor: Colors.white,
-                    showNumbers: false,
-                    textScaleFactor: 2.5,
-                    showTicks: true,
-                    showDigitalClock: true,
-                    digitalClockColor: Colors.white,
-                    datetime: DateTime(2019, 1, 1, 9, 12, 15),
-                ),
+                padding: EdgeInsets.all(20.0),
+              child: AnimatedBuilder(
+                  animation: controller,
+                  builder: (context, child) {
+                      return Stack(
+                          children: <Widget>[
+                              Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: <Widget>[
+                                          Expanded(
+                                              child: Align(
+                                                  alignment: FractionalOffset.center,
+                                                  child: AspectRatio(
+                                                      aspectRatio: 1.0,
+                                                      child: Stack(
+                                                          children: <Widget>[
+                                                              Positioned.fill(
+                                                                  child: CustomPaint(
+                                                                      painter: CustomTimerPainter(
+                                                                          animation: controller,
+                                                                          backgroundColor: Colors.white,
+                                                                          color: themeData.indicatorColor,
+                                                                      )),
+                                                              ),
+                                                              Align(
+                                                                  alignment: FractionalOffset.center,
+                                                                  child: Column(
+                                                                      mainAxisAlignment:
+                                                                      MainAxisAlignment.spaceEvenly,
+                                                                      crossAxisAlignment:
+                                                                      CrossAxisAlignment.center,
+                                                                      children: <Widget>[
+                                                                          Text(
+                                                                              timerString,
+                                                                              style: TextStyle(
+                                                                                  fontSize: 112.0,
+                                                                                  color: Colors.white),
+                                                                          ),
+                                                                      ],
+                                                                  ),
+                                                              ),
+                                                          ],
+                                                      ),
+                                                  ),
+                                              ),
+                                          ),
+                                          AnimatedBuilder(
+                                              animation: controller,
+                                              builder: (context, child) {
+                                                  return FloatingActionButton.extended(
+                                                      onPressed: () {
+                                                          if (controller.isAnimating)
+                                                              controller.stop();
+                                                          else {
+                                                              controller.reverse(
+                                                                  from: controller.value == 0.0
+                                                                      ? 1.0
+                                                                      : controller.value);
+                                                          }
+                                                      },
+                                                      icon: Icon(controller.isAnimating
+                                                          ? Icons.pause
+                                                          : Icons.play_arrow),
+                                                      label: Text(
+                                                          controller.isAnimating ? "Pause" : "Play"));
+                                              }),
+                                      ],
+                                  ),
+                              ),
+                          ],
+                      );
+                  }),
             ),
         );
+    }
+}
+
+class CustomTimerPainter extends CustomPainter {
+    CustomTimerPainter({
+        this.animation,
+        this.backgroundColor,
+        this.color,
+    }) : super(repaint: animation);
+
+    final Animation<double> animation;
+    final Color backgroundColor, color;
+
+    @override
+    void paint(Canvas canvas, Size size) {
+        Paint paint = Paint()
+            ..color = backgroundColor
+            ..strokeWidth = 10.0
+            ..strokeCap = StrokeCap.butt
+            ..style = PaintingStyle.stroke;
+
+        canvas.drawCircle(size.center(Offset.zero), size.width / 2.0, paint);
+        paint.color = color;
+        double progress = (1.0 - animation.value) * 2 * pi;
+        canvas.drawArc(Offset.zero & size, pi * 1.5, progress, false, paint);
+    }
+
+    @override
+    bool shouldRepaint(CustomTimerPainter old) {
+        return animation.value != old.animation.value ||
+            color != old.color ||
+            backgroundColor != old.backgroundColor;
     }
 }

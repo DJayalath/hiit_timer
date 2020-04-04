@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_picker/flutter_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Settings extends StatefulWidget {
     @override
@@ -15,6 +16,39 @@ class SettingsState extends State<Settings> {
     var cyclesPerSet = 0;
     var sets = 0;
     var breakInterval = Duration();
+
+    @override
+    void initState() {
+        super.initState();
+        setPreferences();
+    }
+
+    void setPreferences() async {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+
+        setState(() {
+            if (prefs.containsKey('repTime')) {
+                repTime = Duration(seconds: prefs.getInt('repTime'));
+            }
+
+            if (prefs.containsKey('cyclesPerSet')) {
+                cyclesPerSet = prefs.getInt('cyclesPerSet');
+            }
+
+            if (prefs.containsKey('sets')) {
+                sets = prefs.getInt('sets');
+            }
+
+            if (prefs.containsKey('breakInterval')) {
+                breakInterval = Duration(seconds: prefs.getInt('breakInterval'));
+            }
+        });
+    }
+
+    void storeKey(String key, int value) async {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setInt(key, value);
+    }
 
     @override
     Widget build(BuildContext context) {
@@ -80,9 +114,10 @@ class SettingsState extends State<Settings> {
             title: const Text('Select duration'),
             selectedTextStyle: TextStyle(color: Colors.blue),
             onConfirm: (Picker picker, List<int> value) {
+                // You get your duration here
                 setState(() {
-                    // You get your duration here
                     repTime = Duration(minutes: picker.getSelectedValues()[0], seconds: picker.getSelectedValues()[1]);
+                    storeKey("repTime", repTime.inSeconds);
                 });
             },
         ).showDialog(context);
@@ -111,6 +146,7 @@ class SettingsState extends State<Settings> {
                 setState(() {
                     // You get your duration here
                     cyclesPerSet = picker.getSelectedValues()[0];
+                    storeKey("cyclesPerSet", cyclesPerSet);
                 });
             },
         ).showDialog(context);
@@ -139,6 +175,7 @@ class SettingsState extends State<Settings> {
                 setState(() {
                     // You get your duration here
                     sets = picker.getSelectedValues()[0];
+                    storeKey("sets", sets);
                 });
             },
         ).showDialog(context);
@@ -168,6 +205,7 @@ class SettingsState extends State<Settings> {
                 setState(() {
                     // You get your duration here
                     breakInterval = Duration(minutes: picker.getSelectedValues()[0], seconds: picker.getSelectedValues()[1]);
+                    storeKey("breakInterval", breakInterval.inSeconds);
                 });
             },
         ).showDialog(context);
