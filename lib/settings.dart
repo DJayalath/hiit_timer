@@ -12,6 +12,9 @@ class SettingsState extends State<Settings> {
     Settings settings = Settings();
 
     var repTime = Duration();
+    var cyclesPerSet = 0;
+    var sets = 0;
+    var breakInterval = Duration();
 
     @override
     Widget build(BuildContext context) {
@@ -29,6 +32,27 @@ class SettingsState extends State<Settings> {
                                 "${_printDuration(repTime)}",
                             ),
                         ),
+                        ListTile(
+                            onTap: () => cyclePicker(),
+                            title: Text('Cycles / Set'),
+                            subtitle: Text(
+                                "$cyclesPerSet Cycles",
+                            ),
+                        ),
+                        ListTile(
+                            onTap: () => setPicker(),
+                            title: Text('Sets'),
+                            subtitle: Text(
+                                "$sets Sets",
+                            )
+                        ),
+                        ListTile(
+                            onTap: () => breakPicker(),
+                            title: Text('Break interval (between sets)'),
+                            subtitle: Text(
+                                "${_printDuration(breakInterval)}",
+                            )
+                        )
                     ]
                 )
             )
@@ -38,8 +62,8 @@ class SettingsState extends State<Settings> {
     void repPicker() {
         Picker(
             adapter: NumberPickerAdapter(data: <NumberPickerColumn>[
-                const NumberPickerColumn(begin: 0, end: 60, suffix: Text(' minutes')),
-                const NumberPickerColumn(begin: 0, end: 60, suffix: Text(' seconds')),
+                NumberPickerColumn(begin: 0, initValue: repTime.inMinutes % 60, end: 60, suffix: Text(' minutes')),
+                NumberPickerColumn(begin: 0, initValue: repTime.inSeconds % 60, end: 60, suffix: Text(' seconds')),
             ]),
             delimiter: <PickerDelimiter>[
                 PickerDelimiter(
@@ -64,6 +88,91 @@ class SettingsState extends State<Settings> {
         ).showDialog(context);
     }
 
+    void cyclePicker() {
+        Picker(
+            adapter: NumberPickerAdapter(data: <NumberPickerColumn>[
+                NumberPickerColumn(begin: 0, initValue: cyclesPerSet, end: 20, suffix: Text(' cycles')),
+            ]),
+            delimiter: <PickerDelimiter>[
+                PickerDelimiter(
+                    child: Container(
+                        width: 20.0,
+                        alignment: Alignment.center,
+                        child: Icon(Icons.more_vert),
+                    ),
+                )
+            ],
+            hideHeader: true,
+            confirmText: 'OK',
+            confirmTextStyle: TextStyle(inherit: false, color: Colors.red, fontSize: 22),
+            title: const Text('Select duration'),
+            selectedTextStyle: TextStyle(color: Colors.blue),
+            onConfirm: (Picker picker, List<int> value) {
+                setState(() {
+                    // You get your duration here
+                    cyclesPerSet = picker.getSelectedValues()[0];
+                });
+            },
+        ).showDialog(context);
+    }
+
+    void setPicker() {
+        Picker(
+            adapter: NumberPickerAdapter(data: <NumberPickerColumn>[
+                NumberPickerColumn(begin: 0, initValue: sets, end: 20, suffix: Text(' sets')),
+            ]),
+            delimiter: <PickerDelimiter>[
+                PickerDelimiter(
+                    child: Container(
+                        width: 20.0,
+                        alignment: Alignment.center,
+                        child: Icon(Icons.more_vert),
+                    ),
+                )
+            ],
+            hideHeader: true,
+            confirmText: 'OK',
+            confirmTextStyle: TextStyle(inherit: false, color: Colors.red, fontSize: 22),
+            title: const Text('Select duration'),
+            selectedTextStyle: TextStyle(color: Colors.blue),
+            onConfirm: (Picker picker, List<int> value) {
+                setState(() {
+                    // You get your duration here
+                    sets = picker.getSelectedValues()[0];
+                });
+            },
+        ).showDialog(context);
+    }
+
+    void breakPicker() {
+        Picker(
+            adapter: NumberPickerAdapter(data: <NumberPickerColumn>[
+                NumberPickerColumn(begin: 0, initValue: breakInterval.inMinutes % 60, end: 60, suffix: Text(' minutes')),
+                NumberPickerColumn(begin: 0, initValue: breakInterval.inSeconds % 60, end: 60, suffix: Text(' seconds')),
+            ]),
+            delimiter: <PickerDelimiter>[
+                PickerDelimiter(
+                    child: Container(
+                        width: 20.0,
+                        alignment: Alignment.center,
+                        child: Icon(Icons.more_vert),
+                    ),
+                )
+            ],
+            hideHeader: true,
+            confirmText: 'OK',
+            confirmTextStyle: TextStyle(inherit: false, color: Colors.red, fontSize: 22),
+            title: const Text('Select duration'),
+            selectedTextStyle: TextStyle(color: Colors.blue),
+            onConfirm: (Picker picker, List<int> value) {
+                setState(() {
+                    // You get your duration here
+                    breakInterval = Duration(minutes: picker.getSelectedValues()[0], seconds: picker.getSelectedValues()[1]);
+                });
+            },
+        ).showDialog(context);
+    }
+
     String _printDuration(Duration duration) {
         String twoDigits(int n) {
             if (n >= 10) return "$n";
@@ -72,6 +181,6 @@ class SettingsState extends State<Settings> {
 
         String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
         String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
-        return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
+        return "$twoDigitMinutes:$twoDigitSeconds";
     }
 }

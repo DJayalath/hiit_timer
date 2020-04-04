@@ -6,9 +6,9 @@ A timer for high intensity interval training (HIIT)
 
 ### Settings
 - ~~Set rep time~~
-- Set cycles in set
-- Set number of sets
-- Set break interval between sets
+- ~~Set cycles in set~~
+- ~~Set number of sets~~
+- ~~Set break interval between sets~~
 
 ### Timer
 - Rep countdown
