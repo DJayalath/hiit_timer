@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock/wakelock.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:audioplayers/audio_cache.dart';
 import 'dart:math';
 
 class Timer extends StatefulWidget {
@@ -15,6 +17,10 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
 
     AnimationController controller;
     var inBreak = false;
+
+    Future<AudioPlayer> playPushSound() async {
+        return await cache.play("beep.mp3");
+    }
 
     String get timerString {
         Duration duration = Duration(seconds: ((inBreak) ? breakInterval : repTime).inSeconds - (controller.duration.inSeconds * controller.value).floor());
@@ -45,6 +51,7 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
             duration: Duration(seconds: 20),
         );
 
+        cache.load("beep.mp3");
         setTimerState();
     }
 
@@ -54,6 +61,7 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
     var sets = 0;
     var setsRemaining = 1;
     var breakInterval = Duration();
+    static AudioCache cache = new AudioCache();
 
     void setTimerState() async {
         SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -162,6 +170,7 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
                                                                                                   if (status == AnimationStatus.completed) {
                                                                                                       setState(() {
                                                                                                           if (!inBreak) {
+                                                                                                              playPushSound();
                                                                                                               cyclesRemaining++;
                                                                                                           }
                                                                                                           if (cyclesRemaining - 1 == cyclesPerSet) {
@@ -173,6 +182,7 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
 
                                                                                                           } else {
                                                                                                               inBreak = false;
+                                                                                                              playPushSound();
                                                                                                               controller.duration = repTime;
                                                                                                           }
                                                                                                           if (setsRemaining - 1 == sets) {
