@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'settings.dart';
 import 'timer.dart';
 
-void main() => runApp(HIITTimer());
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp])
+      .then((_) {
+    runApp(HIITTimer());
+  });
+}
 
 class HIITTimer extends StatelessWidget {
   // Root of application

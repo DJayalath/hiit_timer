@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wakelock/wakelock.dart';
 import 'dart:math';
 
 class Timer extends StatefulWidget {
@@ -132,9 +133,12 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
                                                                               builder: (context, child) {
                                                                                   return FloatingActionButton.extended(
                                                                                       onPressed: () {
-                                                                                          if (controller.isAnimating)
+                                                                                          if (controller.isAnimating) {
+                                                                                              Wakelock.disable();
                                                                                               controller.stop();
+                                                                                          }
                                                                                           else {
+                                                                                              Wakelock.enable();
                                                                                               controller.forward(
                                                                                                   from: controller.value,
                                                                                               );
@@ -156,15 +160,17 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
                                                                                                               setsRemaining++; // AFTER BREAK
                                                                                                               cyclesRemaining = 1;
 
-                                                                                                              if (setsRemaining - 1 == sets) {
-                                                                                                                  controller.reset();
-                                                                                                              }
                                                                                                           } else {
                                                                                                               inBreak = false;
                                                                                                               controller.duration = repTime;
                                                                                                           }
-                                                                                                          controller.reset();
-                                                                                                          controller.forward(from: 0.0);
+                                                                                                          if (setsRemaining - 1 == sets) {
+                                                                                                              controller.reset();
+                                                                                                              controller.stop();
+                                                                                                          } else {
+                                                                                                              controller.reset();
+                                                                                                              controller.forward(from: 0.0);
+                                                                                                          }
 
                                                                                                       });
                                                                                                   }

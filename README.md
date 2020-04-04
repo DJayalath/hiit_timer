@@ -11,11 +11,13 @@ A timer for high intensity interval training (HIIT)
 - ~~Set break interval between sets~~
 
 ### Timer
-- Rep countdown
-- Cycle countdown
-- Set countdown
-- Break countdown
-- Huge timer for best visibility during workout
+- ~~Rep timer~~
+- ~~Cycle countdown~~
+- ~~Set countdown~~
+- ~~Break timer~~
+- ~~Huge timer for best visibility during workout~~
+- ~~Wakelock~~
+- ~~Lock portrait orientation~~
 
 ## Acknowledgements
-Modified [analog_clock](https://github.com/furkantektas/analog_clock) library from [furkantektas](https://github.com/furkantektas)
+Modified [flutter_countdown_timer](https://github.com/flutter-devs/CountDownTimer) from [FlutterDevs](https://github.com/flutter-devs)
