@@ -18,6 +18,7 @@ A timer for high intensity interval training (HIIT)
 - ~~Huge timer for best visibility during workout~~
 - ~~Wakelock~~
 - ~~Lock portrait orientation~~
+- ~~Signalling sound tones~~
 
 ## Acknowledgements
 Modified [flutter_countdown_timer](https://github.com/flutter-devs/CountDownTimer) from [FlutterDevs](https://github.com/flutter-devs)
