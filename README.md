@@ -2,23 +2,27 @@
 
 A timer for high intensity interval training (HIIT)
 
-## Features TODO
+## Features
 
 ### Settings
-- ~~Set rep time~~
-- ~~Set cycles in set~~
-- ~~Set number of sets~~
-- ~~Set break interval between sets~~
+- Set rep time
+- Set cycles in set
+- Set number of sets
+- Set break interval between sets
 
 ### Timer
-- ~~Rep timer~~
-- ~~Cycle countdown~~
-- ~~Set countdown~~
-- ~~Break timer~~
-- ~~Huge timer for best visibility during workout~~
-- ~~Wakelock~~
-- ~~Lock portrait orientation~~
-- ~~Signalling sound tones~~
+- Rep timer
+- Rest timer
+- Cycle tracker
+- Set tracker
+- Wakelock
+- Orientation lock
+- Sound tones
+
+## TODO
+- Bug testing
+- Handle error cases in settings
+- Publish and release
 
 ## Acknowledgements
 Modified [flutter_countdown_timer](https://github.com/flutter-devs/CountDownTimer) from [FlutterDevs](https://github.com/flutter-devs)
