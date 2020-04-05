@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_picker/flutter_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'utility.dart';
+
 class Settings extends StatefulWidget {
     @override
     SettingsState createState() => SettingsState();
@@ -40,7 +42,8 @@ class SettingsState extends State<Settings> {
             }
 
             if (prefs.containsKey('breakInterval')) {
-                breakInterval = Duration(seconds: prefs.getInt('breakInterval'));
+                breakInterval =
+                    Duration(seconds: prefs.getInt('breakInterval'));
             }
         });
     }
@@ -53,7 +56,7 @@ class SettingsState extends State<Settings> {
     @override
     Widget build(BuildContext context) {
         // TODO: implement build
-        return Scaffold (
+        return Scaffold(
             body: Container(
                 padding: EdgeInsets.all(10.0),
                 alignment: Alignment.topCenter,
@@ -63,7 +66,7 @@ class SettingsState extends State<Settings> {
                             onTap: () => repPicker(),
                             title: Text('Time / Rep'),
                             subtitle: Text(
-                                "${_printDuration(repTime)}",
+                                "${Utility.getMMSS(repTime)}",
                             ),
                         ),
                         ListTile(
@@ -84,7 +87,7 @@ class SettingsState extends State<Settings> {
                             onTap: () => breakPicker(),
                             title: Text('Break interval (between sets)'),
                             subtitle: Text(
-                                "${_printDuration(breakInterval)}",
+                                "${Utility.getMMSS(breakInterval)}",
                             )
                         )
                     ]
@@ -96,8 +99,14 @@ class SettingsState extends State<Settings> {
     void repPicker() {
         Picker(
             adapter: NumberPickerAdapter(data: <NumberPickerColumn>[
-                NumberPickerColumn(begin: 0, initValue: repTime.inMinutes % 60, end: 60, suffix: Text(' minutes')),
-                NumberPickerColumn(begin: 0, initValue: repTime.inSeconds % 60, end: 60, suffix: Text(' seconds')),
+                NumberPickerColumn(begin: 0,
+                    initValue: repTime.inMinutes % 60,
+                    end: 60,
+                    suffix: Text(' minutes')),
+                NumberPickerColumn(begin: 0,
+                    initValue: repTime.inSeconds % 60,
+                    end: 60,
+                    suffix: Text(' seconds')),
             ]),
             delimiter: <PickerDelimiter>[
                 PickerDelimiter(
@@ -110,13 +119,15 @@ class SettingsState extends State<Settings> {
             ],
             hideHeader: true,
             confirmText: 'OK',
-            confirmTextStyle: TextStyle(inherit: false, color: Colors.red, fontSize: 22),
+            confirmTextStyle: TextStyle(
+                inherit: false, color: Colors.red, fontSize: 22),
             title: const Text('Select duration'),
             selectedTextStyle: TextStyle(color: Colors.blue),
             onConfirm: (Picker picker, List<int> value) {
                 // You get your duration here
                 setState(() {
-                    repTime = Duration(minutes: picker.getSelectedValues()[0], seconds: picker.getSelectedValues()[1]);
+                    repTime = Duration(minutes: picker.getSelectedValues()[0],
+                        seconds: picker.getSelectedValues()[1]);
                     storeKey("repTime", repTime.inSeconds);
                 });
             },
@@ -126,7 +137,10 @@ class SettingsState extends State<Settings> {
     void cyclePicker() {
         Picker(
             adapter: NumberPickerAdapter(data: <NumberPickerColumn>[
-                NumberPickerColumn(begin: 0, initValue: cyclesPerSet, end: 20, suffix: Text(' cycles')),
+                NumberPickerColumn(begin: 0,
+                    initValue: cyclesPerSet,
+                    end: 20,
+                    suffix: Text(' cycles')),
             ]),
             delimiter: <PickerDelimiter>[
                 PickerDelimiter(
@@ -139,7 +153,8 @@ class SettingsState extends State<Settings> {
             ],
             hideHeader: true,
             confirmText: 'OK',
-            confirmTextStyle: TextStyle(inherit: false, color: Colors.red, fontSize: 22),
+            confirmTextStyle: TextStyle(
+                inherit: false, color: Colors.red, fontSize: 22),
             title: const Text('Select duration'),
             selectedTextStyle: TextStyle(color: Colors.blue),
             onConfirm: (Picker picker, List<int> value) {
@@ -155,7 +170,8 @@ class SettingsState extends State<Settings> {
     void setPicker() {
         Picker(
             adapter: NumberPickerAdapter(data: <NumberPickerColumn>[
-                NumberPickerColumn(begin: 0, initValue: sets, end: 20, suffix: Text(' sets')),
+                NumberPickerColumn(
+                    begin: 0, initValue: sets, end: 20, suffix: Text(' sets')),
             ]),
             delimiter: <PickerDelimiter>[
                 PickerDelimiter(
@@ -168,7 +184,8 @@ class SettingsState extends State<Settings> {
             ],
             hideHeader: true,
             confirmText: 'OK',
-            confirmTextStyle: TextStyle(inherit: false, color: Colors.red, fontSize: 22),
+            confirmTextStyle: TextStyle(
+                inherit: false, color: Colors.red, fontSize: 22),
             title: const Text('Select duration'),
             selectedTextStyle: TextStyle(color: Colors.blue),
             onConfirm: (Picker picker, List<int> value) {
@@ -184,8 +201,14 @@ class SettingsState extends State<Settings> {
     void breakPicker() {
         Picker(
             adapter: NumberPickerAdapter(data: <NumberPickerColumn>[
-                NumberPickerColumn(begin: 0, initValue: breakInterval.inMinutes % 60, end: 60, suffix: Text(' minutes')),
-                NumberPickerColumn(begin: 0, initValue: breakInterval.inSeconds % 60, end: 60, suffix: Text(' seconds')),
+                NumberPickerColumn(begin: 0,
+                    initValue: breakInterval.inMinutes % 60,
+                    end: 60,
+                    suffix: Text(' minutes')),
+                NumberPickerColumn(begin: 0,
+                    initValue: breakInterval.inSeconds % 60,
+                    end: 60,
+                    suffix: Text(' seconds')),
             ]),
             delimiter: <PickerDelimiter>[
                 PickerDelimiter(
@@ -198,27 +221,19 @@ class SettingsState extends State<Settings> {
             ],
             hideHeader: true,
             confirmText: 'OK',
-            confirmTextStyle: TextStyle(inherit: false, color: Colors.red, fontSize: 22),
+            confirmTextStyle: TextStyle(
+                inherit: false, color: Colors.red, fontSize: 22),
             title: const Text('Select duration'),
             selectedTextStyle: TextStyle(color: Colors.blue),
             onConfirm: (Picker picker, List<int> value) {
                 setState(() {
                     // You get your duration here
-                    breakInterval = Duration(minutes: picker.getSelectedValues()[0], seconds: picker.getSelectedValues()[1]);
+                    breakInterval = Duration(
+                        minutes: picker.getSelectedValues()[0],
+                        seconds: picker.getSelectedValues()[1]);
                     storeKey("breakInterval", breakInterval.inSeconds);
                 });
             },
         ).showDialog(context);
-    }
-
-    String _printDuration(Duration duration) {
-        String twoDigits(int n) {
-            if (n >= 10) return "$n";
-            return "0$n";
-        }
-
-        String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
-        String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
-        return "$twoDigitMinutes:$twoDigitSeconds";
     }
 }

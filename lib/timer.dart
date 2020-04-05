@@ -1,45 +1,268 @@
+import 'dart:math';
+
+import 'package:audioplayers/audio_cache.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock/wakelock.dart';
-import 'package:audioplayers/audioplayers.dart';
-import 'package:audioplayers/audio_cache.dart';
-import 'dart:math';
+
+import 'utility.dart';
+
+class CustomTimerPainter extends CustomPainter {
+    final Animation<double> animation;
+
+    final Color backgroundColor, color;
+
+    CustomTimerPainter({
+        this.animation,
+        this.backgroundColor,
+        this.color,
+    }) : super(repaint: animation);
+
+    @override
+    void paint(Canvas canvas, Size size) {
+        Paint paint = Paint()
+            ..color = backgroundColor
+            ..strokeWidth = 10.0
+            ..strokeCap = StrokeCap.butt
+            ..style = PaintingStyle.stroke;
+
+        Size realSize = Size(size.width, size.width);
+        canvas.drawCircle(realSize.center(Offset.zero), realSize.width / 2.0, paint);
+        paint.color = color;
+        double progress = animation.value * 2 * pi;
+        canvas.drawArc(Offset.zero & realSize, pi * 1.5, progress, false, paint);
+    }
+
+    @override
+    bool shouldRepaint(CustomTimerPainter old) {
+        return animation.value != old.animation.value ||
+            color != old.color ||
+            backgroundColor != old.backgroundColor;
+    }
+}
 
 class Timer extends StatefulWidget {
     @override
     TimerState createState() => TimerState();
-
 }
 
 class TimerState extends State<Timer> with TickerProviderStateMixin {
+
+    // Cache for audio files to play
+    static AudioCache cache = new AudioCache();
+
+    // Instance of Timer
     Timer timer = Timer();
 
     AnimationController controller;
-    var inBreak = false;
 
-    Future<AudioPlayer> playPushSound() async {
-        return await cache.play("beep.mp3");
-    }
+    // Track break status
+    var breakTime = false;
+
+    // Time per rep
+    var repTime = Duration();
+
+    var cyclesPerSet = 0;
+    var currentCycle = 1;
+
+    var sets = 0;
+    var currentSet = 1;
+
+    var breakInterval = Duration();
 
     String get timerString {
-        Duration duration = Duration(seconds: ((inBreak) ? breakInterval : repTime).inSeconds - (controller.duration.inSeconds * controller.value).floor());
+        Duration duration = Duration(
+            seconds: ((breakTime) ? breakInterval : repTime).inSeconds -
+                (controller.duration.inSeconds * controller.value).floor());
         if (duration.inSeconds < 60) {
-            return '${(duration.inSeconds).toString()}';
+            return '${duration.inSeconds}';
         } else {
-            return '${_printDuration(duration)}';
+            return '${Utility.getMMSS(duration)}';
         }
     }
 
-    String _printDuration(Duration duration) {
-        String twoDigits(int n) {
-            if (n >= 10) return "$n";
-            return "0$n";
-        }
+    @override
+    Widget build(BuildContext context) {
+        ThemeData themeData = Theme.of(context);
+        return Scaffold(
+            body: Column(
+                children: <Widget>[
+                    Container(
+                        padding: EdgeInsets.fromLTRB(
+                            0.0, 40.0, 0.0, 20.0,
+                        ),
+                        child: Align(
+                            alignment: Alignment.topCenter,
+                            child: Text((breakTime) ? "REST" : "PUSH",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontSize: 60.0,
+                                    color: (!breakTime) ? Colors.redAccent : Colors.greenAccent,
+                                ),
+                            ),
+                        ),
+                    ),
+                    Container(
+                        // Internal padding (pushes things inside closer together)
+                        padding: EdgeInsets.symmetric(vertical: 20.0),
+                        height: 300.0,
+                        width: 300.0,
+                        child: AnimatedBuilder(
+                            animation: controller,
+                            child: null,
+                            builder: (context, child) {
+                                return Stack(
+                                    children: <Widget>[
+                                        Positioned.fill(
+                                            child: CustomPaint(
+                                                painter: CustomTimerPainter(
+                                                    animation: controller,
+                                                    backgroundColor: Colors.white,
+                                                    color: (breakTime) ? themeData.indicatorColor : Colors.redAccent,
+                                                ),
+                                            ),
+                                        ),
+                                        Align(
+                                            alignment: FractionalOffset.center,
+                                            child: Column(
+                                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                crossAxisAlignment: CrossAxisAlignment.center,
+                                                children: <Widget>[
+                                                    Text(
+                                                        timerString,
+                                                        style: TextStyle(
+                                                            fontSize: 112.0,
+                                                            color: Colors.white
+                                                        ),
+                                                    ),
+                                                    AnimatedBuilder(
+                                                        animation: controller,
+                                                        builder: (context, child) {
+                                                            return FloatingActionButton.extended(
+                                                                onPressed: () {
+                                                                    if (controller.isAnimating) {
+                                                                        Wakelock.disable();
+                                                                        controller.stop();
+                                                                    } else {
+                                                                        Wakelock.enable();
+                                                                        controller.forward(from: controller.value);
 
-        String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
-        String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
-        return "$twoDigitMinutes:$twoDigitSeconds";
+                                                                        controller.addStatusListener((status) {
+                                                                            if (status == AnimationStatus.completed) {
+                                                                                setState(() {
+                                                                                    if (!breakTime) {
+                                                                                        currentCycle++;
+                                                                                        if (currentCycle - 1 == cyclesPerSet) {
+                                                                                            playRestSound();
+                                                                                        } else {
+                                                                                            playPushSound();
+                                                                                        }
+                                                                                    }
+                                                                                    if (currentCycle - 1 == cyclesPerSet) {
+                                                                                        // INITIATE BREAK
+                                                                                        controller.duration = breakInterval;
+                                                                                        breakTime = true;
+                                                                                        currentSet++; // AFTER BREAK
+                                                                                        currentCycle = 1;
+                                                                                    } else {
+                                                                                        breakTime = false;
+                                                                                        playPushSound();
+                                                                                        controller.duration = repTime;
+                                                                                    }
+                                                                                    if (currentSet - 1 == sets) {
+                                                                                        currentSet = 1;
+                                                                                        currentCycle = 1;
+                                                                                        controller.reset();
+                                                                                        controller.stop();
+                                                                                        Wakelock.disable();
+                                                                                    } else {
+                                                                                        controller.reset();
+                                                                                        controller.forward(from: 0.0);
+                                                                                    }
+                                                                                });
+                                                                            }
+                                                                        });
+                                                                    }
+                                                                },
+                                                                icon: Icon(
+                                                                    controller.isAnimating ? Icons.pause : Icons.play_arrow
+                                                                ),
+                                                                label: Text(
+                                                                    controller.isAnimating ? "Pause" : "Play"
+                                                                )
+                                                            );
+                                                        }),
+                                                ],
+                                            ),
+                                        ),
+                                    ],
+                                );
+                            }
+                        ),
+                    ),
+                    Container(
+                        padding: EdgeInsets.fromLTRB(0, 60.0, 0, 0.0),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: <Widget>[
+                                Column(
+                                    children: <Widget>[
+                                        Center(
+                                            child: Text(
+                                                "$currentCycle/$cyclesPerSet",
+                                                style: TextStyle(
+                                                    fontSize: 60.0,
+                                                    color: Colors.greenAccent,
+                                                )
+                                            ),
+                                        ),
+                                        Center(
+                                            child: Text(
+                                                "cycles",
+                                                style: TextStyle(
+                                                    fontSize: 20.0,
+                                                    color: Colors.white70,
+                                                )
+                                            )
+                                        ),
+                                    ],
+                                ),
+                                Column(
+                                    children: <Widget>[
+                                        Center(
+                                            child: Text(
+                                                "$currentSet/$sets",
+                                                style: TextStyle(
+                                                    fontSize: 60.0,
+                                                    color: Colors.greenAccent,
+                                                ),
+                                            ),
+                                        ),
+                                        Center(
+                                            child: Text(
+                                                "sets",
+                                                style: TextStyle(
+                                                    fontSize: 20.0,
+                                                    color: Colors.white70,
+                                                )
+                                            )
+                                        ),
+                                    ],
+                                )
+                            ],
+                        ),
+                    )
+                ],
+            )
+        );
+    }
+
+    @override
+    void dispose() {
+        controller.dispose();
+        super.dispose();
     }
 
     @override
@@ -51,17 +274,17 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
             duration: Duration(seconds: 20),
         );
 
-        cache.load("beep.mp3");
+        cache.loadAll(["push.wav", "rest.wav"]);
         setTimerState();
     }
 
-    var repTime = Duration();
-    var cyclesPerSet = 0;
-    var cyclesRemaining = 1;
-    var sets = 0;
-    var setsRemaining = 1;
-    var breakInterval = Duration();
-    static AudioCache cache = new AudioCache();
+    Future<AudioPlayer> playPushSound() async {
+        return await cache.play("push.wav");
+    }
+
+    Future<AudioPlayer> playRestSound() async {
+        return await cache.play("rest.wav");
+    }
 
     void setTimerState() async {
         SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -69,10 +292,7 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
         setState(() {
             if (prefs.containsKey('repTime')) {
                 repTime = Duration(seconds: prefs.getInt('repTime'));
-                controller = AnimationController(
-                    vsync: this,
-                    duration: repTime,
-                );
+                controller.duration = repTime;
             }
 
             if (prefs.containsKey('cyclesPerSet')) {
@@ -84,205 +304,9 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
             }
 
             if (prefs.containsKey('breakInterval')) {
-                breakInterval = Duration(seconds: prefs.getInt('breakInterval'));
+                breakInterval =
+                    Duration(seconds: prefs.getInt('breakInterval'));
             }
         });
     }
-
-    @override
-    Widget build(BuildContext context) {
-        ThemeData themeData = Theme.of(context);
-        return Scaffold(
-//            backgroundColor: Colors.white10,
-            body: Container(
-                padding: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
-              child: AnimatedBuilder(
-                  animation: controller,
-                  builder: (context, child) {
-                      return Stack(
-                          children: <Widget>[
-                              Container(
-                                  padding: EdgeInsets.symmetric(vertical: 50.0),
-                                child: Align(
-                                    alignment: Alignment.topCenter,
-                                  child: Text(
-                                      (inBreak) ? "REST" : "PUSH",
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                          fontSize: 40.0,
-                                          color: (!inBreak) ? Colors.redAccent : Colors.greenAccent,
-                                      )
-                                  ),
-                                ),
-                              ),
-                              Padding(
-                                  padding: EdgeInsets.fromLTRB(25.0, 5.0, 25.0, 15.0),
-                                  child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: <Widget>[
-                                          Expanded(
-                                              child: Align(
-                                                  alignment: FractionalOffset.center,
-                                                  child: AspectRatio(
-                                                      aspectRatio: 1.0,
-                                                      child: Stack(
-                                                          children: <Widget>[
-                                                              Positioned.fill(
-                                                                  child: CustomPaint(
-                                                                      painter: CustomTimerPainter(
-                                                                          animation: controller,
-                                                                          backgroundColor: Colors.white,
-                                                                          color: (inBreak) ? themeData.indicatorColor : Colors.redAccent,
-                                                                      )),
-                                                              ),
-                                                              Align(
-                                                                  alignment: FractionalOffset.center,
-                                                                  child: Column(
-                                                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                      crossAxisAlignment: CrossAxisAlignment.center,
-                                                                      children: <Widget>[
-                                                                          Text(
-                                                                              timerString,
-                                                                              style: TextStyle(
-                                                                                  fontSize: 112.0,
-                                                                                  color: Colors.white),
-                                                                          ),
-                                                                          AnimatedBuilder(
-                                                                              animation: controller,
-                                                                              builder: (context, child) {
-                                                                                  return FloatingActionButton.extended(
-                                                                                      onPressed: () {
-                                                                                          if (controller.isAnimating) {
-                                                                                              Wakelock.disable();
-                                                                                              controller.stop();
-                                                                                          }
-                                                                                          else {
-                                                                                              Wakelock.enable();
-                                                                                              controller.forward(
-                                                                                                  from: controller.value,
-                                                                                              );
-//                                                              controller.reverse(
-//                                                                  from: controller.value == 0.0
-//                                                                      ? 1.0
-//                                                                      : controller.value);
-
-                                                                                              controller.addStatusListener((status) {
-                                                                                                  if (status == AnimationStatus.completed) {
-                                                                                                      setState(() {
-                                                                                                          if (!inBreak) {
-                                                                                                              playPushSound();
-                                                                                                              cyclesRemaining++;
-                                                                                                          }
-                                                                                                          if (cyclesRemaining - 1 == cyclesPerSet) {
-                                                                                                              // INITIATE BREAK
-                                                                                                              controller.duration = breakInterval;
-                                                                                                              inBreak = true;
-                                                                                                              setsRemaining++; // AFTER BREAK
-                                                                                                              cyclesRemaining = 1;
-
-                                                                                                          } else {
-                                                                                                              inBreak = false;
-                                                                                                              playPushSound();
-                                                                                                              controller.duration = repTime;
-                                                                                                          }
-                                                                                                          if (setsRemaining - 1 == sets) {
-                                                                                                              setsRemaining = 1;
-                                                                                                              cyclesRemaining = 1;
-                                                                                                              controller.reset();
-                                                                                                              controller.stop();
-                                                                                                              Wakelock.disable();
-                                                                                                          } else {
-                                                                                                              controller.reset();
-                                                                                                              controller.forward(from: 0.0);
-                                                                                                          }
-
-                                                                                                      });
-                                                                                                  }
-                                                                                              });
-                                                                                          }
-                                                                                      },
-                                                                                      icon: Icon(controller.isAnimating
-                                                                                          ? Icons.pause
-                                                                                          : Icons.play_arrow),
-                                                                                      label: Text(
-                                                                                          controller.isAnimating ? "Pause" : "Play"));
-                                                                              }),
-                                                                      ],
-                                                                  ),
-                                                              ),
-                                                          ],
-                                                      ),
-                                                  ),
-                                              ),
-                                          ),
-                                      ],
-                                  ),
-                              ),
-                              Align(
-                                  alignment: Alignment.bottomCenter,
-                                child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                    children: <Widget>[
-                                        Padding(
-                                            padding: const EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 50.0),
-                                            child: Text(
-                                                "Cycle $cyclesRemaining/$cyclesPerSet",
-                                                style: TextStyle(
-                                                    fontSize: 40.0,
-                                                    color: Colors.white70,
-                                                )
-                                            ),
-                                        ),
-                                        Padding(
-                                            padding: const EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 50.0),
-                                            child: Text(
-                                                "Set $setsRemaining/$sets",
-                                                style: TextStyle(
-                                                    fontSize: 40.0,
-                                                    color: Colors.white70,
-                                                ),
-                                            ),
-                                        ),
-                                    ],
-                                ),
-                              ),
-                          ],
-                      );
-                  }),
-            ),
-        );
-    }
-}
-
-class CustomTimerPainter extends CustomPainter {
-    CustomTimerPainter({
-        this.animation,
-        this.backgroundColor,
-        this.color,
-    }) : super(repaint: animation);
-
-    final Animation<double> animation;
-    final Color backgroundColor, color;
-
-    @override
-    void paint(Canvas canvas, Size size) {
-        Paint paint = Paint()
-            ..color = backgroundColor
-            ..strokeWidth = 10.0
-            ..strokeCap = StrokeCap.butt
-            ..style = PaintingStyle.stroke;
-
-        canvas.drawCircle(size.center(Offset.zero), size.width / 2.0, paint);
-        paint.color = color;
-        double progress = animation.value * 2 * pi;
-        canvas.drawArc(Offset.zero & size, pi * 1.5, progress, false, paint);
-    }
-
-    @override
-    bool shouldRepaint(CustomTimerPainter old) {
-        return animation.value != old.animation.value ||
-            color != old.color ||
-            backgroundColor != old.backgroundColor;
-    }
-
 }
