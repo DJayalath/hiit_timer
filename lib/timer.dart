@@ -106,7 +106,8 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
                     ),
                     Container(
                         // Internal padding (pushes things inside closer together)
-                        padding: EdgeInsets.symmetric(vertical: 20.0),
+                        margin: EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 0.0),
+                        padding: EdgeInsets.symmetric(vertical: 0.0),
                         height: 300.0,
                         width: 300.0,
                         child: AnimatedBuilder(
@@ -130,11 +131,14 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
                                                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                 crossAxisAlignment: CrossAxisAlignment.center,
                                                 children: <Widget>[
-                                                    Text(
-                                                        timerString,
-                                                        style: TextStyle(
-                                                            fontSize: 112.0,
-                                                            color: Colors.white
+                                                    FittedBox(
+                                                        fit: BoxFit.contain,
+                                                        child: Text(
+                                                            timerString,
+                                                            style: TextStyle(
+                                                                fontSize: (timerString.length > 2) ? 80.0 : 112,
+                                                                color: Colors.white
+                                                            ),
                                                         ),
                                                     ),
                                                     AnimatedBuilder(
