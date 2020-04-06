@@ -56,6 +56,7 @@ class SettingsState extends State<Settings> {
     @override
     Widget build(BuildContext context) {
         // TODO: implement build
+        ThemeData themeData = Theme.of(context);
         return Scaffold(
             body: Container(
                 padding: EdgeInsets.all(10.0),
@@ -63,28 +64,28 @@ class SettingsState extends State<Settings> {
                 child: ListView(
                     children: <Widget>[
                         ListTile(
-                            onTap: () => repPicker(),
+                            onTap: () => repPicker(themeData),
                             title: Text('Time / Rep'),
                             subtitle: Text(
                                 "${Utility.getMMSS(repTime)}",
                             ),
                         ),
                         ListTile(
-                            onTap: () => cyclePicker(),
+                            onTap: () => cyclePicker(themeData),
                             title: Text('Cycles / Set'),
                             subtitle: Text(
                                 "$cyclesPerSet Cycles",
                             ),
                         ),
                         ListTile(
-                            onTap: () => setPicker(),
+                            onTap: () => setPicker(themeData),
                             title: Text('Sets'),
                             subtitle: Text(
                                 "$sets Sets",
                             )
                         ),
                         ListTile(
-                            onTap: () => breakPicker(),
+                            onTap: () => breakPicker(themeData),
                             title: Text('Break interval (between sets)'),
                             subtitle: Text(
                                 "${Utility.getMMSS(breakInterval)}",
@@ -96,7 +97,7 @@ class SettingsState extends State<Settings> {
         );
     }
 
-    void repPicker() {
+    void repPicker(ThemeData themeData) {
         Picker(
             adapter: NumberPickerAdapter(data: <NumberPickerColumn>[
                 NumberPickerColumn(begin: 0,
@@ -119,10 +120,8 @@ class SettingsState extends State<Settings> {
             ],
             hideHeader: true,
             confirmText: 'OK',
-            confirmTextStyle: TextStyle(
-                inherit: false, color: Colors.red, fontSize: 22),
-            title: const Text('Select duration'),
-            selectedTextStyle: TextStyle(color: Colors.blue),
+            title: const Text('Select Duration'),
+            selectedTextStyle: TextStyle(color: themeData.secondaryHeaderColor),
             onConfirm: (Picker picker, List<int> value) {
                 // You get your duration here
                 setState(() {
@@ -134,7 +133,7 @@ class SettingsState extends State<Settings> {
         ).showDialog(context);
     }
 
-    void cyclePicker() {
+    void cyclePicker(themeData) {
         Picker(
             adapter: NumberPickerAdapter(data: <NumberPickerColumn>[
                 NumberPickerColumn(begin: 0,
@@ -153,10 +152,8 @@ class SettingsState extends State<Settings> {
             ],
             hideHeader: true,
             confirmText: 'OK',
-            confirmTextStyle: TextStyle(
-                inherit: false, color: Colors.red, fontSize: 22),
             title: const Text('Select duration'),
-            selectedTextStyle: TextStyle(color: Colors.blue),
+            selectedTextStyle: TextStyle(color: themeData.secondaryHeaderColor),
             onConfirm: (Picker picker, List<int> value) {
                 setState(() {
                     // You get your duration here
@@ -167,7 +164,7 @@ class SettingsState extends State<Settings> {
         ).showDialog(context);
     }
 
-    void setPicker() {
+    void setPicker(themeData) {
         Picker(
             adapter: NumberPickerAdapter(data: <NumberPickerColumn>[
                 NumberPickerColumn(
@@ -184,10 +181,8 @@ class SettingsState extends State<Settings> {
             ],
             hideHeader: true,
             confirmText: 'OK',
-            confirmTextStyle: TextStyle(
-                inherit: false, color: Colors.red, fontSize: 22),
             title: const Text('Select duration'),
-            selectedTextStyle: TextStyle(color: Colors.blue),
+            selectedTextStyle: TextStyle(color: themeData.secondaryHeaderColor),
             onConfirm: (Picker picker, List<int> value) {
                 setState(() {
                     // You get your duration here
@@ -198,7 +193,7 @@ class SettingsState extends State<Settings> {
         ).showDialog(context);
     }
 
-    void breakPicker() {
+    void breakPicker(themeData) {
         Picker(
             adapter: NumberPickerAdapter(data: <NumberPickerColumn>[
                 NumberPickerColumn(begin: 0,
@@ -221,10 +216,8 @@ class SettingsState extends State<Settings> {
             ],
             hideHeader: true,
             confirmText: 'OK',
-            confirmTextStyle: TextStyle(
-                inherit: false, color: Colors.red, fontSize: 22),
             title: const Text('Select duration'),
-            selectedTextStyle: TextStyle(color: Colors.blue),
+            selectedTextStyle: TextStyle(color: themeData.secondaryHeaderColor),
             onConfirm: (Picker picker, List<int> value) {
                 setState(() {
                     // You get your duration here

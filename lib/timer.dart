@@ -60,6 +60,8 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
 
     // Track break status
     var breakTime = false;
+    // Track play/pause status
+    bool isStopped = true;
 
     // Time per rep
     var repTime = Duration();
@@ -83,6 +85,16 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
         }
     }
 
+    void resetTimer(animation) {
+        setState(() {
+            currentSet = 1;
+            currentCycle = 1;
+            breakTime = false;
+            isStopped = true;
+            animation.reset();
+        });
+    }
+
     @override
     Widget build(BuildContext context) {
         ThemeData themeData = Theme.of(context);
@@ -99,7 +111,7 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                     fontSize: 60.0,
-                                    color: (!breakTime) ? Colors.redAccent : Colors.greenAccent,
+                                    color: (!breakTime) ? themeData.secondaryHeaderColor : themeData.accentColor,
                                 ),
                             ),
                         ),
@@ -107,12 +119,21 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
                     Container(
                         // Internal padding (pushes things inside closer together)
                         margin: EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 0.0),
-                        padding: EdgeInsets.symmetric(vertical: 0.0),
+                        padding: EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 10.0),
                         height: 300.0,
                         width: 300.0,
                         child: AnimatedBuilder(
                             animation: controller,
-                            child: null,
+                            child: FloatingActionButton.extended(
+                                label: Text(
+                                    "Reset",
+                                ),
+                                icon: Icon(
+                                    Icons.cancel,
+                                ),
+                                backgroundColor: themeData.secondaryHeaderColor,
+                                onPressed: () => resetTimer(controller),
+                            ),
                             builder: (context, child) {
                                 return Stack(
                                     children: <Widget>[
@@ -120,85 +141,109 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
                                             child: CustomPaint(
                                                 painter: CustomTimerPainter(
                                                     animation: controller,
-                                                    backgroundColor: Colors.white,
-                                                    color: (breakTime) ? themeData.indicatorColor : Colors.redAccent,
+                                                    backgroundColor: themeData.errorColor,
+                                                    color: (breakTime) ? themeData.accentColor : themeData.secondaryHeaderColor,
                                                 ),
                                             ),
                                         ),
                                         Align(
                                             alignment: FractionalOffset.center,
-                                            child: Column(
-                                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                crossAxisAlignment: CrossAxisAlignment.center,
-                                                children: <Widget>[
-                                                    FittedBox(
-                                                        fit: BoxFit.contain,
-                                                        child: Text(
-                                                            timerString,
-                                                            style: TextStyle(
-                                                                fontSize: (timerString.length > 2) ? 80.0 : 112,
-                                                                color: Colors.white
-                                                            ),
-                                                        ),
-                                                    ),
-                                                    AnimatedBuilder(
-                                                        animation: controller,
-                                                        builder: (context, child) {
-                                                            return FloatingActionButton.extended(
-                                                                onPressed: () {
-                                                                    if (controller.isAnimating) {
-                                                                        Wakelock.disable();
-                                                                        controller.stop();
-                                                                    } else {
-                                                                        Wakelock.enable();
-                                                                        controller.forward(from: controller.value);
+                                            child: Container(
+                                                height: 170,
+                                              child: Column(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                                  children: <Widget>[
+                                                      FittedBox(
+                                                          fit: BoxFit.contain,
+                                                          child: Text(
+                                                              timerString,
+                                                              style: TextStyle(
+                                                                  fontSize: 90.0,
+                                                                  color: themeData.errorColor,
+                                                              ),
+                                                          ),
+                                                      ),
+                                                      Container(
+                                                          width: 250,
+                                                          child: Row(
+                                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                              crossAxisAlignment: CrossAxisAlignment.center,
+                                                              children: <Widget>[
+                                                                  AnimatedBuilder(
+                                                                      animation: controller,
+                                                                      builder: (context, child) {
+                                                                          return FloatingActionButton(
+                                                                              onPressed: () {
+                                                                                  if (controller.isAnimating) {
+                                                                                      isStopped = true;
+                                                                                      Wakelock.disable();
+                                                                                      controller.stop();
+                                                                                      setState(() {
 
-                                                                        controller.addStatusListener((status) {
-                                                                            if (status == AnimationStatus.completed) {
-                                                                                setState(() {
-                                                                                    if (!breakTime) {
-                                                                                        currentCycle++;
-                                                                                        if (currentCycle - 1 == cyclesPerSet) {
-                                                                                            playRestSound();
-                                                                                        } else {
-                                                                                            playPushSound();
-                                                                                        }
-                                                                                    }
-                                                                                    if (currentCycle - 1 == cyclesPerSet) {
-                                                                                        // INITIATE BREAK
-                                                                                        controller.duration = breakInterval;
-                                                                                        breakTime = true;
-                                                                                        currentSet++; // AFTER BREAK
-                                                                                        currentCycle = 1;
-                                                                                    } else {
-                                                                                        breakTime = false;
-                                                                                        playPushSound();
-                                                                                        controller.duration = repTime;
-                                                                                    }
-                                                                                    if (currentSet - 1 == sets) {
-                                                                                        currentSet = 1;
-                                                                                        currentCycle = 1;
-                                                                                        controller.reset();
-                                                                                        controller.stop();
-                                                                                        Wakelock.disable();
-                                                                                    } else {
-                                                                                        controller.reset();
-                                                                                        controller.forward(from: 0.0);
-                                                                                    }
-                                                                                });
-                                                                            }
-                                                                        });
-                                                                    }
-                                                                },
-                                                                icon: Icon(
-                                                                    controller.isAnimating ? Icons.pause : Icons.play_arrow
-                                                                ),
-                                                                label: Text(
-                                                                    controller.isAnimating ? "Pause" : "Play"
-                                                                )
-                                                            );
-                                                        }),
-                                                ],
+                                                                                      });
+                                                                                  } else {
+                                                                                      isStopped = false;
+                                                                                      Wakelock.enable();
+                                                                                      controller.forward(from: controller.value);
+
+                                                                                      controller.addStatusListener((status) {
+                                                                                          if (status == AnimationStatus.completed) {
+                                                                                              setState(() {
+                                                                                                  if (!breakTime) {
+                                                                                                      currentCycle++;
+                                                                                                      if (currentCycle - 1 == cyclesPerSet) {
+                                                                                                          playRestSound();
+                                                                                                      } else {
+                                                                                                          playPushSound();
+                                                                                                      }
+                                                                                                  }
+                                                                                                  if (currentCycle - 1 == cyclesPerSet) {
+                                                                                                      // INITIATE BREAK
+                                                                                                      controller.duration = breakInterval;
+                                                                                                      breakTime = true;
+                                                                                                      currentSet++; // AFTER BREAK
+                                                                                                      currentCycle = 1;
+                                                                                                  } else {
+                                                                                                      breakTime = false;
+                                                                                                      playPushSound();
+                                                                                                      controller.duration = repTime;
+                                                                                                  }
+                                                                                                  if (currentSet - 1 == sets) {
+                                                                                                      currentSet = 1;
+                                                                                                      currentCycle = 1;
+                                                                                                      controller.reset();
+                                                                                                      controller.stop();
+                                                                                                      Wakelock.disable();
+                                                                                                  } else {
+                                                                                                      controller.reset();
+                                                                                                      controller.forward(from: 0.0);
+                                                                                                  }
+                                                                                              });
+                                                                                          }
+                                                                                      });
+                                                                                  }
+                                                                              },
+                                                                              child: Icon(
+                                                                                  (() {
+                                                                                      if (isStopped) {
+                                                                                          return Icons.play_arrow;
+                                                                                      } else {
+                                                                                          return Icons.pause;
+                                                                                      }
+                                                                                  }())
+                                                                              ),
+//                                                                              label: Text(""
+//                                                                                  controller.isAnimating ? "Pause" : "Start"
+//                                                                              )
+                                                                          );
+                                                                      }),
+                                                                  child,
+                                                              ],
+                                                          ),
+                                                      ),
+                                                  ],
+                                              ),
                                             ),
                                         ),
                                     ],
@@ -218,7 +263,7 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
                                                 "$currentCycle/$cyclesPerSet",
                                                 style: TextStyle(
                                                     fontSize: 60.0,
-                                                    color: Colors.greenAccent,
+                                                    color: themeData.accentColor,
                                                 )
                                             ),
                                         ),
@@ -227,7 +272,7 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
                                                 "cycles",
                                                 style: TextStyle(
                                                     fontSize: 20.0,
-                                                    color: Colors.white70,
+                                                    color: themeData.hintColor,
                                                 )
                                             )
                                         ),
@@ -240,7 +285,7 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
                                                 "$currentSet/$sets",
                                                 style: TextStyle(
                                                     fontSize: 60.0,
-                                                    color: Colors.greenAccent,
+                                                    color: themeData.accentColor,
                                                 ),
                                             ),
                                         ),
@@ -249,7 +294,7 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
                                                 "sets",
                                                 style: TextStyle(
                                                     fontSize: 20.0,
-                                                    color: Colors.white70,
+                                                    color: themeData.hintColor,
                                                 )
                                             )
                                         ),

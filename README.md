@@ -20,7 +20,7 @@ A timer for high intensity interval training (HIIT)
 - Sound tones
 
 ## TODO
-- Theme-based colouring
+- Make a less hideous light theme
 - Bug testing
 - Handle error cases in settings
 - Publish and release
