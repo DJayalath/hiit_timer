@@ -1,5 +1,5 @@
 # Secure signing key
-android/key.properties
+**/android/key.properties
 
 # Miscellaneous
 *.class
