@@ -124,11 +124,11 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
                         width: 300.0,
                         child: AnimatedBuilder(
                             animation: controller,
-                            child: FloatingActionButton.extended(
-                                label: Text(
-                                    "Reset",
-                                ),
-                                icon: Icon(
+                            child: FloatingActionButton(
+//                                label: Text(
+//                                    "Reset",
+//                                ),
+                                child: Icon(
                                     Icons.cancel,
                                 ),
                                 backgroundColor: themeData.secondaryHeaderColor,
@@ -165,7 +165,7 @@ class TimerState extends State<Timer> with TickerProviderStateMixin {
                                                           ),
                                                       ),
                                                       Container(
-                                                          width: 250,
+                                                          width: 150,
                                                           child: Row(
                                                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                               crossAxisAlignment: CrossAxisAlignment.center,
