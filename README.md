@@ -18,6 +18,7 @@ A timer for high intensity interval training (HIIT)
 - Wakelock
 - Orientation lock
 - Sound tones
+- Start/Pause/Reset
 
 ## TODO
 - Make a less hideous light theme
