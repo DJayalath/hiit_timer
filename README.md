@@ -2,6 +2,8 @@
 
 A timer for high intensity interval training (HIIT)
 
+Get it on [Google Play](https://play.google.com/store/apps/details?id=com.dulhanjayalath.hiit_timer)
+
 ## Features
 
 ### Settings
